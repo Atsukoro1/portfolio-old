@@ -10,14 +10,51 @@
 </head>
 <body>
     <header>
-        <h1>Why is DNS over HTTPS useless</h1>
+        <h1>Why is DNS over HTTPS bad</h1>
         <a href="/">Home</a> /
         <a href="/blog.html">Blog</a> / 
         <a href="https://app.hackthebox.com/users/692313">HackTheBox</a>
     </header>
 
-    <h1>All my articles</h1>
+    <h1>What is DNS?</h1>
+    <p>
+        First, let's talk about what DNS is. DNS is a decentralized system to resolve
+        domain names to both IPv4 and IPv6 addresses, it has more purpose but this is
+        not important to know to understand this article. It is a very important part
+        of the internet, without it, you wouldn't be able to access any websites by without 
+        memorizing the IP address. DNS is an unencrypted protocol so it's possible to
+        intercept and modify DNS requests.
+    </p>
 
-    <p>No articles for now</p>
+    <h1>What is encryption and how is it used</h1>
+    <p>
+        We will use HTTPS as an example, but this applies to any encryption. Encryption
+        is a way to scramble data so that it is unreadable to anyone who doesn't have
+        the key to decrypt it. When requesting data from webserver over HTTPS, the
+        data is encrypted in process known as asymetric cryptography. The webserver
+        uses a private key to encrypt the data, and the client uses the public key to
+        decrypt the data. The public key is sent to the client when the client
+        connects to the webserver, and the private key is kept secret. This is how
+        HTTPS works, keep this in mind for later.
+    </p>
+
+    <h1>Why encryption matters</h1>
+    <p>
+        When sending unencrypted data over our network, it is possible for anyone to 
+        intercept the data, read it and also modify it using Man In The Middle (MITM) attack. 
+        Also our ISP can see what we are doing and sell this data to third party companies. 
+        This is why encryption is a must for every protocol that sends data over the internet.
+    </p>
+
+    <h1>Is there a solution?</h1>
+    <p>
+        Currently there are two solutions to this problem, DNS over HTTPS (DoH) and DNS over
+        TLS (DoT). DoH is a protocol that sends encrypted DNS data over HTTPS with the requested
+        data from the remote web server. DoT is an encrypted DNS implementation on it's own,
+        and does not use any other protocol to transfer it's data.
+    </p>
+
+    <h1>Flaws of DoH</h1>
+    <h1>Flaws of DoT</h1>
 </body>
 </html>
