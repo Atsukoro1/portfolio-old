@@ -20,10 +20,10 @@
 
     <img src="https://i.postimg.cc/9Q5F8xh2/image.png" alt="challenge">
     <p>
-        Since there is no explanation for this challenge, let me do it myself.
-        C.O.P was pretty simple challenge for an experienced person, for me it was 
-        a little bit hard, but nothing insane. This will be a <b>step by step guide</b> about
-        how I solved this.
+        Since there is no explanation for this challenge, I will do it myself. 
+        C.O.P was a pretty simple challenge for an experienced person. For me, 
+        it was a little bit hard, but nothing insane. This will be a step by 
+        step guide about how I solved this.
     </p>
 
     <h1>Step 1 - Enumeration</h1>
@@ -34,26 +34,27 @@
         </p>
         <img src="https://i.postimg.cc/9XwByMXk/image.png" alt="logo">
         <p>
-            Looking at Snyk's database for this particular Werkzeug version, it looks like the only 
-            vulnerability here is with debug console (which is not enabled), so we must look somewhere else
-            for the hint, there is source code of this application available for us to look at the HackTheBox website so 
-            let's look through it.
+            Looking at Snyk's database, it looks like the only vulnerability present in this 
+            particular Werkzeug version is with the debug console (which is not enabled). 
+            So, we must look somewhere else for the hint. There is source code of this application
+            available on the HackTheBox website, so let's look through it.
         </p>
     </div>
 
     <h1>Step 2 - SQLi found</h1>
     <div>
         <p>
-            It took me about 5 minutes to find this extremely simple SQL injection in models file by
-            easily escaping the apostrophe. We can influence this variable at "/view/[number]" route by
-            changing the url path which is used for ID of specific product.
+            It took me about 5 minutes to find this extremely simple SQL injection in the models 
+            file by easily escaping the apostrophe. We can influence this variable at the 
+            "/view/[number]" route by changing the url path which is used for the ID of a 
+            specific product.
         </p>
         <img src="https://i.postimg.cc/dVcvJLDc/image.png" alt="obrazek">
         <p>
-            This will be Boolean based SQLi so it will be little bit slow to crawl through data, you can
-            additionally add "threads" parameter to enumerate faster but in our case it's pretty much
-            useless. Let's run the following sqlmap command with asterisk symbol in the location 
-            where product id should be to represent that this can be injectable.
+            This will be Boolean-based SQLi, so it will be a little bit slow to crawl through data. 
+            You can additionally add a "threads" parameter to enumerate faster, but in our case it's 
+            pretty much useless. Let's run the following sqlmap command with an asterisk symbol in 
+            the location where the product id should be to represent that this can be injectable.
         </p>
         <img src="https://i.postimg.cc/VN3xmNYb/image.png" alt="obrazek">
 
@@ -78,22 +79,22 @@
             <summary>What is python pickle</summary>
 
             <p>
-                A python library for deserializing and serializing data into object structure.
-                In this case it is being used to serialize list.
+                A python library for deserializing and serializing data into an object structure. 
+                In this case, it is being used to serialize a list.
             </p>
         </details>
 
         <p>
-            Let's first look how the application process data using the pickles library to fully 
-            understand how to attack.
+            Let's take a look at how the application processes data using the pickles library, 
+            so that we can fully understand how to attack it.
         </p>
         <img src="https://i.ibb.co/sFZ2K98/image.png" alt="template">
 
         <p>
-            We can see that there is a variable with name "product" being processed in template, 
-            it is being piped to "pickle" server-side function, this will be our 
-            entry point that we'll attack. The method vulnerable to RCE in pickle is called loads 
-            (as defined below), this function will decode base-64 encoded string and then unpack it.
+            We can see that the variable "product" is being processed in the template and piped
+            to the "pickle" server-side function. This will be our entry point that we'll attack. 
+            The method vulnerable to RCE in pickle is called "loads" (as defined below). 
+            This function will decode the base-64 encoded string and then unpack it.
         </p>
         <img src="https://i.ibb.co/dDtk6Ww/image.png" alt="attack">
     </div>
@@ -101,8 +102,8 @@
     <h1>Step 4 - Obtaining the flag</h1>
     <div>
         <p>
-            In the previous step I described how I plan to attack the machine, let's do it now, here is
-            my python script that I wrote to generate the payload.
+            In the previous step, I described how I plan to attack the machine. 
+            Let's do it now. Here is my python script that I wrote to generate the payload.
         </p>
         <pre>
 import pickle
@@ -119,10 +120,10 @@ if __name__ == "__main__":
     pickled = pickle.dumps(Gen())
     print(base64.urlsafe_b64encode(pickled))</pre>
     <p>
-        For some reason I could not estabilish a reverse shell so tried different method 
-        that one guy from Discord said to me, moving the flag from the root directory to the
-        directory from where are files served as static (that way we can access the flag.txt file
-        from the browser).
+        For some reason, I could not establish a reverse shell, so I tried a different method 
+        that one guy from Discord said to me. I moved the flag from the root directory to the 
+        directory from where the files are served as static. That way, we can access the flag.txt 
+        file from the browser.
     </p>
 
     <p>
@@ -139,7 +140,7 @@ if __name__ == "__main__":
     <h1>Conclusion</h1>
     <div>
         <p>
-            I think, it was really interesting machine, especially for a begginer like me.
+            I think the machine was really interesting, especially for a beginner like me. 
             I learned a lot about different types of SQL injections, enumerating the application's 
             source code and also to be patient lol.
         </p>
