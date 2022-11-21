@@ -10,51 +10,137 @@
 </head>
 <body>
     <header>
-        <h1>Why is DNS over HTTPS bad</h1>
+        <h1>HackTheBox challenge writeup - C.O.P</h1>
         <a href="/">Home</a> /
         <a href="/blog.html">Blog</a> / 
         <a href="https://app.hackthebox.com/users/692313">HackTheBox</a>
     </header>
 
-    <h1>What is DNS?</h1>
+    <img src="https://i.postimg.cc/9Q5F8xh2/image.png" alt="challenge">
     <p>
-        First, let's talk about what DNS is. DNS is a decentralized system to resolve
-        domain names to both IPv4 and IPv6 addresses, it has more purpose but this is
-        not important to know to understand this article. It is a very important part
-        of the internet, without it, you wouldn't be able to access any websites by without 
-        memorizing the IP address. DNS is an unencrypted protocol so it's possible to
-        intercept and modify DNS requests.
+        Since there is no explanation for this challenge, let me do it myself.
+        C.O.P was pretty simple challenge for an experienced person, for me it was 
+        a little bit hard, but nothing insane. This will be a <b>step by step guide</b> about
+        how I solved this.
     </p>
 
-    <h1>What is encryption and how is it used</h1>
+    <h1>Step 1 - Enumeration</h1>
+    <div>
+        <p>
+            First, let's look to Server HTTP header to see if there is some vulnerable version 
+            of webserver running on this machine.
+        </p>
+        <img src="https://i.postimg.cc/9XwByMXk/image.png" alt="logo">
+        <p>
+            Looking at Snyk's database for this particular Werkzeug version, it looks like the only 
+            vulnerability here is with debug console (which is not enabled), so we must look somewhere else
+            for the hint, there is source code of this application available for us to look at the HackTheBox website so 
+            let's look through it.
+        </p>
+    </div>
+
+    <h1>Step 2 - SQLi found</h1>
+    <div>
+        <p>
+            It took me about 5 minutes to find this extremely simple SQL injection in models file by
+            easily escaping the apostrophe. We can influence this variable at "/view/[number]" route by
+            changing the url path which is used for ID of specific product.
+        </p>
+        <img src="https://i.postimg.cc/dVcvJLDc/image.png" alt="obrazek">
+        <p>
+            This will be Boolean based SQLi so it will be little bit slow to crawl through data, you can
+            additionally add "threads" parameter to enumerate faster but in our case it's pretty much
+            useless. Let's run the following sqlmap command with asterisk symbol in the location 
+            where product id should be to represent that this can be injectable.
+        </p>
+        <img src="https://i.postimg.cc/VN3xmNYb/image.png" alt="obrazek">
+
+        <p>
+            Let's run this sqlmap command and look what we have inside this database.
+        </p>
+        <img src="https://i.postimg.cc/d1wjFmcZ/image.png" alt="sqli">
+
+        <p>
+            There are 2 tables present in this one database, the first one contains
+            product id, base64 encoded data and created_at timestamp. The second DB is only for
+            sqlite to store user data. Nothing here can help us further continue, so the way must
+            be somewhere else.
+        </p>
+        <img src="https://i.postimg.cc/g2yXvx7G/image.png" alt="data">
+    </div>
+
+    <h1>Step 3 - Python pickle RCE</h1>
+    <div>
+        <p>As the website content suggests, the the main problem here are "pickles".</p>
+        <details>
+            <summary>What is python pickle</summary>
+
+            <p>
+                A python library for deserializing and serializing data into object structure.
+                In this case it is being used to serialize list.
+            </p>
+        </details>
+
+        <p>
+            Let's first look how the application process data using the pickles library to fully 
+            understand how to attack.
+        </p>
+        <img src="https://i.ibb.co/sFZ2K98/image.png" alt="template">
+
+        <p>
+            We can see that there is a variable with name "product" being processed in template, 
+            it is being piped to "pickle" server-side function, this will be our 
+            entry point that we'll attack. The method vulnerable to RCE in pickle is called loads 
+            (as defined below), this function will decode base-64 encoded string and then unpack it.
+        </p>
+        <img src="https://i.ibb.co/dDtk6Ww/image.png" alt="attack">
+    </div>
+
+    <h1>Step 4 - Obtaining the flag</h1>
+    <div>
+        <p>
+            In the previous step I described how I plan to attack the machine, let's do it now, here is
+            my python script that I wrote to generate the payload.
+        </p>
+        <pre>
+import pickle
+import base64
+import os
+
+class Gen(object):
+    def __reduce__(self):
+        # RCE
+        script = "mv ./flag.txt /app/application/static/images/flag.txt"
+        return os.popen, (script)
+
+if __name__ == "__main__":
+    pickled = pickle.dumps(Gen())
+    print(base64.urlsafe_b64encode(pickled))</pre>
     <p>
-        We will use HTTPS as an example, but this applies to any encryption. Encryption
-        is a way to scramble data so that it is unreadable to anyone who doesn't have
-        the key to decrypt it. When requesting data from webserver over HTTPS, the
-        data is encrypted in process known as asymetric cryptography. The webserver
-        uses a private key to encrypt the data, and the client uses the public key to
-        decrypt the data. The public key is sent to the client when the client
-        connects to the webserver, and the private key is kept secret. This is how
-        HTTPS works, keep this in mind for later.
+        For some reason I could not estabilish a reverse shell so tried different method 
+        that one guy from Discord said to me, moving the flag from the root directory to the
+        directory from where are files served as static (that way we can access the flag.txt file
+        from the browser).
     </p>
 
-    <h1>Why encryption matters</h1>
     <p>
-        When sending unencrypted data over our network, it is possible for anyone to 
-        intercept the data, read it and also modify it using Man In The Middle (MITM) attack. 
-        Also our ISP can see what we are doing and sell this data to third party companies. 
-        This is why encryption is a must for every protocol that sends data over the internet.
+        Let's now use the SQLi we know that is here with the base-64 encoded string that exploits 
+        pickle library at "/view/[number]" route like this:
     </p>
+    <img src="https://i.ibb.co/BtsrtSB/image-1.png" alt="payload">
 
-    <h1>Is there a solution?</h1>
     <p>
-        Currently there are two solutions to this problem, DNS over HTTPS (DoH) and DNS over
-        TLS (DoT). DoH is a protocol that sends encrypted DNS data over HTTPS with the requested
-        data from the remote web server. DoT is an encrypted DNS implementation on it's own,
-        and does not use any other protocol to transfer it's data.
+        <b>Done!</b> You can now access the flag at this directory [ip addr]:[port]/static/images/flag.txt
     </p>
+    </div>
 
-    <h1>Flaws of DoH</h1>
-    <h1>Flaws of DoT</h1>
+    <h1>Conclusion</h1>
+    <div>
+        <p>
+            I think, it was really interesting machine, especially for a begginer like me.
+            I learned a lot about different types of SQL injections, enumerating the application's 
+            source code and also to be patient lol.
+        </p>
+    </div>
 </body>
 </html>
